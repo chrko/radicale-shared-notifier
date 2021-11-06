@@ -4,6 +4,7 @@
 package de.c9n.radicale.utils;
 
 public class App {
+
   public String getGreeting() {
     return "Hello World!";
   }

@@ -1,0 +1,122 @@
+buildscript {
+    configurations.classpath {
+        resolutionStrategy.activateDependencyLocking()
+    }
+}
+
+plugins {
+    id 'application'
+    id 'com.palantir.git-version' version '0.12.+'
+
+    id 'com.github.spotbugs' version '4.+'
+    id 'pmd'
+    id 'jacoco'
+
+    id 'ca.cutterslade.analyze' version '1.+'
+    id 'com.github.andygoossens.gradle-modernizer-plugin' version '1.+'
+    id 'com.github.ben-manes.versions' version '0.+'
+
+    id 'com.diffplug.spotless' version '5.+'
+}
+
+// configure project version controlled by git tags
+def gitVersion = gitVersion()
+def gitVersionDetails = versionDetails()
+
+if (gitVersionDetails.lastTag != null && gitVersionDetails.lastTag.contains('v')) {
+    project.version = gitVersion.substring(1)
+} else {
+    project.version = gitVersion
+}
+
+// define global java settings
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+
+    //erzeugt eigenes jar mit sources
+    withSourcesJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation(platform('org.junit:junit-bom:5.+'))
+    testImplementation('org.junit.jupiter:junit-jupiter-api')
+    testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine')
+}
+
+application {
+    mainClass = 'de.c9n.radicale.utils.App'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+pmd {
+    toolVersion = '6.+'
+}
+
+modernizer {
+    includeTestClasses = true
+}
+
+// Generic settings
+
+// ensure consistent compiling
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.deprecation = true
+    options.compilerArgs.add('-Xlint:unchecked')
+}
+
+// reproducible builds
+tasks.withType(AbstractArchiveTask) {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+// enable dependency locking / versioning
+dependencyLocking {
+    lockAllConfigurations()
+}
+
+// configure checking on available updates
+def isNonStable = { String version ->
+    def stableKeyword = ['RELEASE', 'FINAL', 'GA'].any { it -> version.toUpperCase().contains(it) }
+    def regex = /^[0-9,.v-]+(-r)?$/
+    return !stableKeyword && !(version ==~ regex)
+}
+
+tasks.named('dependencyUpdates').configure {
+    checkConstraints = true
+
+    rejectVersionIf {
+        isNonStable(it.candidate.version) && !isNonStable(it.currentVersion)
+    }
+}
+
+spotless {
+    // optional: limit format enforcement to just the files changed by this feature branch
+    // ratchetFrom 'origin/main'
+
+    java {
+        googleJavaFormat('1.12.0').reflowLongStrings()
+
+        toggleOffOn()
+
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    groovyGradle {
+        indentWithSpaces(4)
+
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}

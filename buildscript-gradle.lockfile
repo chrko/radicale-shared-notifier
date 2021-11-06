@@ -1,0 +1,41 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+ca.cutterslade.analyze:ca.cutterslade.analyze.gradle.plugin:1.8.1=classpath
+ca.cutterslade.gradle:gradle-dependency-analyze:1.8.1=classpath
+com.diffplug.durian:durian-collect:1.2.0=classpath
+com.diffplug.durian:durian-core:1.2.0=classpath
+com.diffplug.durian:durian-io:1.2.0=classpath
+com.diffplug.spotless:com.diffplug.spotless.gradle.plugin:5.17.1=classpath
+com.diffplug.spotless:spotless-lib-extra:2.19.2=classpath
+com.diffplug.spotless:spotless-lib:2.19.2=classpath
+com.diffplug.spotless:spotless-plugin-gradle:5.17.1=classpath
+com.github.andygoossens.gradle-modernizer-plugin:com.github.andygoossens.gradle-modernizer-plugin.gradle.plugin:1.6.1=classpath
+com.github.andygoossens:gradle-modernizer-plugin:1.6.1=classpath
+com.github.ben-manes.versions:com.github.ben-manes.versions.gradle.plugin:0.39.0=classpath
+com.github.ben-manes:gradle-versions-plugin:0.39.0=classpath
+com.github.spotbugs.snom:spotbugs-gradle-plugin:4.7.9=classpath
+com.github.spotbugs:com.github.spotbugs.gradle.plugin:4.7.9=classpath
+com.google.code.findbugs:jsr305:1.3.9=classpath
+com.google.errorprone:error_prone_annotations:2.0.18=classpath
+com.google.guava:guava:23.5-jre=classpath
+com.google.j2objc:j2objc-annotations:1.1=classpath
+com.googlecode.concurrent-trees:concurrent-trees:2.6.1=classpath
+com.googlecode.javaewah:JavaEWAH:1.1.7=classpath
+com.palantir.git-version:com.palantir.git-version.gradle.plugin:0.12.3=classpath
+com.palantir.gradle.gitversion:gradle-git-version:0.12.3=classpath
+com.thoughtworks.xstream:xstream:1.4.17=classpath
+commons-io:commons-io:2.6=classpath
+io.github.x-stream:mxparser:1.2.1=classpath
+org.apache.maven.shared:maven-dependency-analyzer:1.11.3=classpath
+org.checkerframework:checker-qual:2.0.0=classpath
+org.codehaus.groovy:groovy-xml:3.0.9=classpath
+org.codehaus.groovy:groovy:3.0.9=classpath
+org.codehaus.mojo:animal-sniffer-annotations:1.14=classpath
+org.codehaus.plexus:plexus-component-annotations:2.1.0=classpath
+org.codehaus.plexus:plexus-utils:1.5.1=classpath
+org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r=classpath
+org.ow2.asm:asm:9.2=classpath
+org.slf4j:slf4j-api:1.7.30=classpath
+xmlpull:xmlpull:1.1.3.1=classpath
+empty=
