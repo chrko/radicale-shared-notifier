@@ -20,3 +20,5 @@ jobs:
         run: ./gradlew javaToolchains
       - name: Build with Gradle
         run: ./gradlew build --no-daemon
+      - name: Show detected java toolchains
+        run: ./gradlew javaToolchains
