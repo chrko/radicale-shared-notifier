@@ -8,11 +8,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK to use to build the project
-        uses: actions/setup-java@v2
-        with:
-          java-version: '17'
-          distribution: 'temurin'
       - name: Set up JDK to use with the gradle build
         uses: actions/setup-java@v2
         with:
@@ -20,9 +15,15 @@ jobs:
           distribution: 'temurin'
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1
-      - name: Show detected java toolchains
-        run: ./gradlew javaToolchains
+      - name: Cache gradle
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/jdks
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
       - name: Build with Gradle
         run: ./gradlew build --no-daemon
-      - name: Show detected java toolchains
-        run: ./gradlew javaToolchains
