@@ -1,0 +1,2 @@
+rootProject.name = 'radicale-shared-notifier'
+include('app')
