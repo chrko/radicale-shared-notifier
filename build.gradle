@@ -8,7 +8,6 @@ plugins {
     id 'application'
     id 'com.palantir.git-version' version '0.12.+'
 
-    id 'com.github.spotbugs' version '4.+'
     id 'pmd'
     id 'jacoco'
 
@@ -61,6 +60,7 @@ dependencies {
     testImplementation('org.junit.jupiter:junit-jupiter-api')
     testImplementation('com.google.truth:truth:1.+')
     testImplementation('com.google.truth.extensions:truth-java8-extension:1.+')
+    testImplementation('org.eclipse.jgit:org.eclipse.jgit.junit:5.13.+')
 
     testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine')
 }
@@ -72,10 +72,6 @@ application {
 test {
     useJUnitPlatform()
     testLogging.showStandardStreams = true
-}
-
-spotbugs {
-    ignoreFailures = false
 }
 
 pmd {

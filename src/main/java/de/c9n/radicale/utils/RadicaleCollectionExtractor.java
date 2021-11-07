@@ -1,6 +1,8 @@
 package de.c9n.radicale.utils;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
+import static org.eclipse.jgit.lib.Constants.HEAD;
 import static org.eclipse.jgit.lib.Constants.R_HEADS;
 
 import java.io.IOException;
@@ -11,9 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.RefUpdate.Result;
@@ -54,18 +54,16 @@ public class RadicaleCollectionExtractor implements AutoCloseable {
   }
 
   @NotNull
-  public List<DiffEntry> getDiffEntries() throws IOException, RefNotFoundException {
+  public List<DiffEntry> getDiffEntries() throws IOException {
     RevCommit oldCommit, newCommit;
     synchronized (syncCompare) {
       if (compareBase == null && compareDest == null) {
-        compareBase = getCommitByRef(LAST_COMPARE_BRANCH_NAME);
-        compareDest = getCommitByRef(Constants.HEAD);
+        compareDest = requireNonNull(getCommitByRef(HEAD));
+        compareBase = requireNonNullElse(getCommitByRef(LAST_COMPARE_BRANCH_NAME), compareDest);
       }
-      requireNonNull(compareBase);
-      requireNonNull(compareDest);
 
-      oldCommit = compareBase;
-      newCommit = compareDest;
+      oldCommit = requireNonNull(compareBase);
+      newCommit = requireNonNull(compareDest);
     }
 
     if (users.isEmpty()) {
@@ -133,11 +131,11 @@ public class RadicaleCollectionExtractor implements AutoCloseable {
     return PathFilterGroup.createFromStrings(paths);
   }
 
-  @NotNull
-  RevCommit getCommitByRef(String refName) throws IOException, RefNotFoundException {
+  @Nullable
+  RevCommit getCommitByRef(String refName) throws IOException {
     Ref ref = git.getRepository().findRef(refName);
     if (ref == null) {
-      throw new RefNotFoundException(refName);
+      return null;
     }
 
     return git.getRepository().parseCommit(ref.getObjectId());
