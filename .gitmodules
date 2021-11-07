@@ -1,0 +1,3 @@
+[submodule "src/test/resources/radicale-git/collections"]
+	path = src/test/resources/radicale-git/collections
+	url = git@github.com:chrko/radicale-shared-notifier-test-data.git

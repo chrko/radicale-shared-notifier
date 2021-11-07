@@ -6,3 +6,9 @@ pluginManagement {
 }
 
 rootProject.name = 'radicale-shared-notifier'
+
+import org.apache.tools.ant.DirectoryScanner
+
+DirectoryScanner.removeDefaultExclude('**/.git')
+DirectoryScanner.removeDefaultExclude('**/.git/**')
+DirectoryScanner.removeDefaultExclude('**/.gitignore')
