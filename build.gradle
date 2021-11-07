@@ -69,8 +69,9 @@ application {
     mainClass = 'de.c9n.radicale.utils.App'
 }
 
-tasks.named('test') {
+test {
     useJUnitPlatform()
+    testLogging.showStandardStreams = true
 }
 
 spotbugs {
