@@ -62,13 +62,14 @@ class RadicaleCollectionExtractorTest {
     setupRepository(
         "6081cdf38857e9c98969e74946fd6a1c717b07dc", "bde4e8ebce802f3a4605cfacde71ee3cd4fc266d");
 
-    RadicaleCollectionExtractor extractor = new RadicaleCollectionExtractor(repositoryPath);
-    List<DiffEntry> diffEntries = extractor.getDiffEntries();
-    assertThat(diffEntries).hasSize(1);
-    DiffEntry entry = diffEntries.get(0);
-    assertThat(entry.getChangeType()).isEqualTo(ChangeType.ADD);
+    try (RadicaleCollectionExtractor extractor = new RadicaleCollectionExtractor(repositoryPath)) {
+      List<DiffEntry> diffEntries = extractor.getDiffEntries();
+      assertThat(diffEntries).hasSize(1);
+      DiffEntry entry = diffEntries.get(0);
+      assertThat(entry.getChangeType()).isEqualTo(ChangeType.ADD);
 
-    extractor.acknowledge();
-    assertThat(extractor.getDiffEntries()).isEmpty();
+      extractor.acknowledge();
+      assertThat(extractor.getDiffEntries()).isEmpty();
+    }
   }
 }

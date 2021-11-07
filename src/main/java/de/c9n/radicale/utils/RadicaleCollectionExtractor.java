@@ -144,7 +144,7 @@ public class RadicaleCollectionExtractor implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     git.close();
   }
 }
