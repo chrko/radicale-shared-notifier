@@ -27,7 +27,7 @@ import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RadicaleCollectionExtractor implements AutoCloseable {
+public class MemorizedDiffer implements AutoCloseable {
   private static final String COLLECTION_ROOT = "collection-root";
   private static final String JGIT_DIR_SEPARATOR = "/";
   private static final String USER_PATH_PREFIX = COLLECTION_ROOT + JGIT_DIR_SEPARATOR;
@@ -41,7 +41,7 @@ public class RadicaleCollectionExtractor implements AutoCloseable {
   @Nullable private RevCommit compareBase;
   @Nullable private RevCommit compareDest;
 
-  public RadicaleCollectionExtractor(Path repositoryPath) throws IOException {
+  public MemorizedDiffer(Path repositoryPath) throws IOException {
     git = Git.open(repositoryPath.toFile());
   }
 

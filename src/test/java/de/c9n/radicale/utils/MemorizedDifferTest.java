@@ -2,7 +2,7 @@ package de.c9n.radicale.utils;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
-import static de.c9n.radicale.utils.RadicaleCollectionExtractor.LAST_COMPARE_BRANCH_NAME;
+import static de.c9n.radicale.utils.MemorizedDiffer.LAST_COMPARE_BRANCH_NAME;
 import static java.util.Objects.requireNonNull;
 import static org.eclipse.jgit.lib.Constants.HEAD;
 
@@ -29,7 +29,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("PMD.CloseResource")
-class RadicaleCollectionExtractorTest {
+class MemorizedDifferTest {
   static Path repositoryPath;
   static ObjectId originalHead;
   static TestRepository<?> testRepository;
@@ -93,7 +93,7 @@ class RadicaleCollectionExtractorTest {
     setupRepository(
         "6081cdf38857e9c98969e74946fd6a1c717b07dc", "bde4e8ebce802f3a4605cfacde71ee3cd4fc266d");
 
-    try (RadicaleCollectionExtractor extractor = new RadicaleCollectionExtractor(repositoryPath)) {
+    try (MemorizedDiffer extractor = new MemorizedDiffer(repositoryPath)) {
       List<DiffEntry> diffEntries = extractor.getDiffEntries();
       assertThat(diffEntries).hasSize(1);
       DiffEntry entry = diffEntries.get(0);
@@ -108,7 +108,7 @@ class RadicaleCollectionExtractorTest {
   void bootstrap() throws Exception {
     setupRepository("6081cdf38857e9c98969e74946fd6a1c717b07dc", null);
 
-    try (RadicaleCollectionExtractor extractor = new RadicaleCollectionExtractor(repositoryPath)) {
+    try (MemorizedDiffer extractor = new MemorizedDiffer(repositoryPath)) {
       List<DiffEntry> diffEntries = extractor.getDiffEntries();
       assertThat(diffEntries).isEmpty();
       extractor.acknowledge();
