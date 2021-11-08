@@ -1,18 +1,16 @@
 package de.c9n.radicale.utils;
 
+import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 import static org.eclipse.jgit.lib.Constants.HEAD;
 import static org.eclipse.jgit.lib.Constants.R_HEADS;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
@@ -20,6 +18,7 @@ import org.eclipse.jgit.lib.RefUpdate.Result;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.AndTreeFilter;
 import org.eclipse.jgit.treewalk.filter.PathFilterGroup;
@@ -27,85 +26,96 @@ import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MemorizedDiffer implements AutoCloseable {
-  private static final String COLLECTION_ROOT = "collection-root";
-  private static final String JGIT_DIR_SEPARATOR = "/";
-  private static final String USER_PATH_PREFIX = COLLECTION_ROOT + JGIT_DIR_SEPARATOR;
+public class MemorizedDiffer {
+  public static final String MEMORY_DEFAULT_BRANCH_NAME = "rsn";
 
-  public static final String LAST_COMPARE_BRANCH_NAME = "rsn";
+  private final Path repositoryPath;
 
-  private final Git git;
-  private final Set<String> users = new HashSet<>();
-
-  private final Object syncCompare = new Object();
-  @Nullable private RevCommit compareBase;
-  @Nullable private RevCommit compareDest;
-
-  public MemorizedDiffer(Path repositoryPath) throws IOException {
-    git = Git.open(repositoryPath.toFile());
-  }
-
-  public void addUser(String user) {
-    users.add(user);
-  }
-
-  public void removeUser(String user) {
-    users.remove(user);
-  }
-
-  @NotNull
-  public List<DiffEntry> getDiffEntries() throws IOException {
-    RevCommit oldCommit, newCommit;
-    synchronized (syncCompare) {
-      if (compareBase == null && compareDest == null) {
-        compareDest = requireNonNull(getCommitByRef(HEAD));
-        compareBase = requireNonNullElse(getCommitByRef(LAST_COMPARE_BRANCH_NAME), compareDest);
-      }
-
-      oldCommit = requireNonNull(compareBase);
-      newCommit = requireNonNull(compareDest);
-    }
-
-    if (users.isEmpty()) {
-      return diffCommits(git.getRepository(), oldCommit, newCommit);
-    } else {
-      return diffCommits(git.getRepository(), oldCommit, newCommit, getUserPathFilter());
-    }
-  }
-
-  public void acknowledge() throws IOException {
-    synchronized (syncCompare) {
-      RefUpdate updateRef = git.getRepository().updateRef(R_HEADS + LAST_COMPARE_BRANCH_NAME);
-      updateRef.setNewObjectId(compareDest);
-      updateRef.setRefLogMessage("Acknowledged changed entries", false);
-      Result result = updateRef.forceUpdate();
-      switch (result) {
-        case NEW:
-        case FORCED:
-        case NO_CHANGE:
-          // everything is fine
-          break;
-        default:
-          // unexpected happened
-          throw new RuntimeException("unable to acknowledge, update ref result: " + result);
-      }
-
-      compareBase = null; // NOPMD
-      compareDest = null; // NOPMD
+  public MemorizedDiffer(Path repositoryPath) {
+    this.repositoryPath = requireNonNull(requireNonNull(repositoryPath));
+    if (!Files.isDirectory(repositoryPath)) {
+      throw new IllegalArgumentException("Unsupported git repository");
     }
   }
 
   @NotNull
+  public DiffResult diff() throws IOException {
+    try (Repository repo = FileRepositoryBuilder.create(repositoryPath.toFile())) {
+      RevCommit compareDest = requireNonNull(getCommitByRef(repo, HEAD));
+      RevCommit compareBase =
+          requireNonNullElse(getCommitByRef(repo, MEMORY_DEFAULT_BRANCH_NAME), compareDest);
+
+      List<DiffEntry> diffEntries = diffCommits(repo, compareBase, compareDest);
+      return new DiffResult(repositoryPath, diffEntries, compareDest, MEMORY_DEFAULT_BRANCH_NAME);
+    }
+  }
+
+  public static class DiffResult {
+    private final Path repositoryPath;
+    private final List<DiffEntry> diffEntries;
+    private final RevCommit compareDest;
+
+    private final String memoryBranchName;
+
+    private boolean acknowledged = false;
+
+    private DiffResult(
+        Path repositoryPath,
+        List<DiffEntry> diffEntries,
+        RevCommit compareDest,
+        String memoryBranchName) {
+      this.repositoryPath = repositoryPath;
+      this.diffEntries = diffEntries;
+      this.compareDest = compareDest;
+      this.memoryBranchName = memoryBranchName;
+    }
+
+    public synchronized void acknowledge() throws IOException {
+      if (!acknowledged) {
+        try (Repository repo = FileRepositoryBuilder.create(repositoryPath.toFile())) {
+          RefUpdate updateRef = repo.updateRef(R_HEADS + memoryBranchName);
+
+          updateRef.setNewObjectId(compareDest);
+          updateRef.setRefLogMessage("Acknowledged changed entries", false);
+          Result result = updateRef.forceUpdate();
+
+          switch (result) {
+            case NEW:
+            case FORCED:
+            case NO_CHANGE:
+              // everything is fine
+              break;
+            default:
+              // unexpected happened
+              throw new RuntimeException("unable to acknowledge, update ref result: " + result);
+          }
+        }
+      }
+      acknowledged = true;
+    }
+
+    public List<DiffEntry> getDiffEntries() {
+      return diffEntries;
+    }
+
+    public boolean isAcknowledged() {
+      return acknowledged;
+    }
+  }
+
+  static List<DiffEntry> diffCommits(Repository repo, RevCommit oldCommit, RevCommit newCommit)
+      throws IOException {
+    return diffCommits(repo, oldCommit, newCommit, emptyList());
+  }
+
   static List<DiffEntry> diffCommits(
-      Repository repo, RevCommit oldCommit, RevCommit newCommit, TreeFilter... pathFilters)
+      Repository repo, RevCommit oldCommit, RevCommit newCommit, Collection<String> paths)
       throws IOException {
 
     TreeFilter filter = TreeFilter.ANY_DIFF;
-    if (pathFilters.length > 0) {
-      List<TreeFilter> filters = new ArrayList<>(Arrays.asList(pathFilters));
-      filters.add(TreeFilter.ANY_DIFF);
-
-      filter = AndTreeFilter.create(filters);
+    if (!paths.isEmpty()) {
+      TreeFilter pathFilter = PathFilterGroup.createFromStrings(paths);
+      filter = AndTreeFilter.create(pathFilter, TreeFilter.ANY_DIFF);
     }
 
     RevTree mainTree = newCommit.getTree();
@@ -122,27 +132,13 @@ public class MemorizedDiffer implements AutoCloseable {
     }
   }
 
-  @NotNull
-  private TreeFilter getUserPathFilter() {
-    List<String> paths = new ArrayList<>();
-    for (String user : users) {
-      paths.add(USER_PATH_PREFIX + user);
-    }
-    return PathFilterGroup.createFromStrings(paths);
-  }
-
   @Nullable
-  RevCommit getCommitByRef(String refName) throws IOException {
-    Ref ref = git.getRepository().findRef(refName);
+  static RevCommit getCommitByRef(Repository repo, String refName) throws IOException {
+    Ref ref = repo.findRef(refName);
     if (ref == null) {
       return null;
     }
 
-    return git.getRepository().parseCommit(ref.getObjectId());
-  }
-
-  @Override
-  public void close() {
-    git.close();
+    return repo.parseCommit(ref.getObjectId());
   }
 }

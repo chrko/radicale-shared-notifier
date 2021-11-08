@@ -2,10 +2,11 @@ package de.c9n.radicale.utils;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
-import static de.c9n.radicale.utils.MemorizedDiffer.LAST_COMPARE_BRANCH_NAME;
+import static de.c9n.radicale.utils.MemorizedDiffer.MEMORY_DEFAULT_BRANCH_NAME;
 import static java.util.Objects.requireNonNull;
 import static org.eclipse.jgit.lib.Constants.HEAD;
 
+import de.c9n.radicale.utils.MemorizedDiffer.DiffResult;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -74,7 +75,7 @@ class MemorizedDifferTest {
       throws Exception {
     requireNonNull(headCommit);
 
-    TestRepository<?>.BranchBuilder rsnBranch = testRepository.branch(LAST_COMPARE_BRANCH_NAME);
+    TestRepository<?>.BranchBuilder rsnBranch = testRepository.branch(MEMORY_DEFAULT_BRANCH_NAME);
 
     if (rsnBranchCommit != null) {
       ObjectId commitObjectId = ObjectId.fromString(rsnBranchCommit);
@@ -93,29 +94,26 @@ class MemorizedDifferTest {
     setupRepository(
         "6081cdf38857e9c98969e74946fd6a1c717b07dc", "bde4e8ebce802f3a4605cfacde71ee3cd4fc266d");
 
-    try (MemorizedDiffer extractor = new MemorizedDiffer(repositoryPath)) {
-      List<DiffEntry> diffEntries = extractor.getDiffEntries();
-      assertThat(diffEntries).hasSize(1);
-      DiffEntry entry = diffEntries.get(0);
-      assertThat(entry.getChangeType()).isEqualTo(ChangeType.ADD);
+    DiffResult diffResult = new MemorizedDiffer(repositoryPath).diff();
+    List<DiffEntry> diffEntries = diffResult.getDiffEntries();
+    assertThat(diffEntries).hasSize(1);
+    DiffEntry entry = diffEntries.get(0);
+    assertThat(entry.getChangeType()).isEqualTo(ChangeType.ADD);
 
-      extractor.acknowledge();
-      assertThat(extractor.getDiffEntries()).isEmpty();
-    }
+    diffResult.acknowledge();
   }
 
   @Test
   void bootstrap() throws Exception {
     setupRepository("6081cdf38857e9c98969e74946fd6a1c717b07dc", null);
 
-    try (MemorizedDiffer extractor = new MemorizedDiffer(repositoryPath)) {
-      List<DiffEntry> diffEntries = extractor.getDiffEntries();
-      assertThat(diffEntries).isEmpty();
-      extractor.acknowledge();
-    }
+    DiffResult diffResult = new MemorizedDiffer(repositoryPath).diff();
+    List<DiffEntry> diffEntries = diffResult.getDiffEntries();
+    assertThat(diffEntries).isEmpty();
+    diffResult.acknowledge();
 
     Repository repo = testRepository.getRepository();
-    Ref branch = repo.findRef(LAST_COMPARE_BRANCH_NAME);
+    Ref branch = repo.findRef(MEMORY_DEFAULT_BRANCH_NAME);
     assertThat(branch.getObjectId().getName())
         .isEqualTo("6081cdf38857e9c98969e74946fd6a1c717b07dc");
   }
