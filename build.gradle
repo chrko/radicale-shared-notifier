@@ -8,7 +8,6 @@ plugins {
     id 'application'
     id 'com.palantir.git-version' version '0.12.+'
 
-    id 'com.github.spotbugs' version '4.+'
     id 'pmd'
     id 'jacoco'
 
@@ -39,7 +38,6 @@ java {
     }
 
     withSourcesJar()
-    withJavadocJar()
 }
 
 repositories {
@@ -49,11 +47,21 @@ repositories {
 dependencies {
     errorprone('com.google.errorprone:error_prone_core:[2.4.0,3)')
 
-    // annotationProcessor('com.uber.nullaway:nullaway:[0.9.2,)')
-    // compileOnly('org.jetbrains:annotations:22.+')
+    annotationProcessor('com.uber.nullaway:nullaway:[0.9.2,)')
+    compileOnly('org.jetbrains:annotations:22.+')
+    testCompileOnly('org.jetbrains:annotations:22.+')
+
+    implementation(platform('org.apache.logging.log4j:log4j-bom:2.+'))
+    implementation('org.eclipse.jgit:org.eclipse.jgit:5.13.+')
+    runtimeOnly('org.apache.logging.log4j:log4j-core')
+    runtimeOnly('org.apache.logging.log4j:log4j-slf4j-impl')
 
     testImplementation(platform('org.junit:junit-bom:5.+'))
     testImplementation('org.junit.jupiter:junit-jupiter-api')
+    testImplementation('com.google.truth:truth:1.+')
+    testImplementation('com.google.truth.extensions:truth-java8-extension:1.+')
+    testImplementation('org.eclipse.jgit:org.eclipse.jgit.junit:5.13.+')
+
     testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine')
 }
 
@@ -61,17 +69,16 @@ application {
     mainClass = 'de.c9n.radicale.utils.App'
 }
 
-tasks.named('test') {
+test {
     useJUnitPlatform()
-}
-
-spotbugs {
-    ignoreFailures = false
+    testLogging.showStandardStreams = true
 }
 
 pmd {
     ignoreFailures = false
     toolVersion = '6.+'
+    ruleSets = []
+    ruleSetFiles = files('gradle/pmd.xml')
 }
 
 modernizer {

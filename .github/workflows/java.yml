@@ -8,6 +8,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: true
+          fetch-depth: '0'
       - name: Set up JDK to use with the gradle build
         uses: actions/setup-java@v2
         with:
