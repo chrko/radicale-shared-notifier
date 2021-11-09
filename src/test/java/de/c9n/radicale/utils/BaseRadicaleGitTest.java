@@ -59,7 +59,9 @@ public class BaseRadicaleGitTest {
 
   @AfterAll
   static void cleanup() {
-    testRepository.close();
+    if (testRepository != null) {
+      testRepository.close();
+    }
   }
 
   @AfterEach
